@@ -10,6 +10,7 @@ const DEFAULT_GATEWAY: &str = "192.168.42.1";
 const DEFAULT_DHCP_RANGE: &str = "192.168.42.2,192.168.42.254";
 const DEFAULT_SSID: &str = "WiFi Connect";
 const DEFAULT_ACTIVITY_TIMEOUT: &str = "0";
+const DEFAULT_CONNECTIVITY_TIMEOUT: &str = "20";
 const DEFAULT_UI_DIRECTORY: &str = "ui";
 const DEFAULT_LISTENING_PORT: &str = "80";
 
@@ -22,6 +23,7 @@ pub struct Config {
     pub dhcp_range: String,
     pub listening_port: u16,
     pub activity_timeout: u64,
+    pub connectivity_timeout: u64,
     pub ui_directory: PathBuf,
 }
 
@@ -99,6 +101,14 @@ pub fn get_config() -> Config {
                 .takes_value(true),
         )
         .arg(
+            Arg::with_name("connectivity-timeout")
+                .short("ct")
+                .long("connectivity-timeout")
+                .value_name("connectivity_timeout")
+                .help("Restart access point if no connectivity for the specified time (seconds) (default: none)")
+                .takes_value(true),
+        )
+        .arg(
             Arg::with_name("ui-directory")
                 .short("u")
                 .long("ui-directory")
@@ -154,6 +164,12 @@ pub fn get_config() -> Config {
         String::from,
     ))
     .expect("Cannot parse activity timeout");
+
+    let connectivity_timeout = u64::from_str(&matches.value_of("connectivity-timeout").map_or_else(
+        || env::var("CONNECTIVITY_TIMEOUT").unwrap_or_else(|_| DEFAULT_CONNECTIVITY_TIMEOUT.to_string()),
+        String::from,
+    ))
+    .expect("Cannot parse connectivity timeout");
 
     let ui_directory = get_ui_directory(matches.value_of("ui-directory"));
 
